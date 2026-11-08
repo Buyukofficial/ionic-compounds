@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D Ionic Compounds Explorer</title>
+<style>
+:root{--bg:#08111f;--panel:#122139;--panel2:#192b45;--line:#2b4260;--text:#eef5ff;--muted:#a5b7ce;--cyan:#6be0ed;--gold:#ffd080;--pink:#ff91a6}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#203b5c,#0a1424 55%,#070d17);color:var(--text);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif}
+header{padding:22px clamp(15px,4vw,48px);display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.brand{display:flex;gap:12px;align-items:center}.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#6be0ed,#a1a1ff);display:grid;place-items:center;color:#071321;font-weight:900}.title{font-size:clamp(21px,3vw,30px);font-weight:800;letter-spacing:-.8px}.subtitle{font-size:13px;color:var(--muted);margin-top:3px}.tag{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:8px 12px;color:#c4d5eb}
+main{max-width:1500px;margin:auto;padding:4px clamp(12px,3vw,40px) 35px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px}.viewer{height:min(72vh,690px);min-height:490px;position:relative;overflow:hidden;border:1px solid var(--line);border-radius:22px;background:radial-gradient(ellipse at 50% 48%,#1c304a,#0b1728 70%);box-shadow:0 25px 70px #0005}#stage{position:absolute;inset:0}canvas{display:block;width:100%;height:100%}.overlay{position:absolute;top:16px;left:17px;right:17px;display:flex;justify-content:space-between;gap:12px;pointer-events:none}.ov-title{font-weight:750}.ov-sub{font-size:12px;color:var(--muted);margin-top:4px}.tools{display:flex;gap:7px;pointer-events:auto;flex-wrap:wrap;justify-content:flex-end}
+button,select{font:inherit;color:var(--text);background:#1a2c45;border:1px solid #3a5271;border-radius:10px;padding:9px 11px;cursor:pointer}button:hover{border-color:var(--cyan)}button.active{border-color:var(--cyan);background:#21495a;color:#c7faff}select{width:100%;padding:11px;background:#0d1a2c}.hint{position:absolute;bottom:13px;left:15px;background:#081321cf;border:1px solid #2a405b;border-radius:9px;padding:8px 11px;color:#a9bdd5;font-size:11px;pointer-events:none}
+.side{display:flex;flex-direction:column;gap:12px}.card{background:linear-gradient(155deg,#162740,#101b2d);border:1px solid #293f5d;border-radius:17px;padding:16px}.card h2{font-size:13px;letter-spacing:.5px;margin:0 0 12px;color:#dceaff}.label{font-size:11px;color:var(--muted);display:block;margin-bottom:7px}.formula{font-size:37px;font-weight:850;letter-spacing:-1.5px;margin:9px 0 0}.name{font-size:13px;color:var(--muted);margin-top:1px}.ions{display:flex;gap:8px;margin-top:13px}.ionbox{flex:1;background:#0c1929;border-radius:11px;padding:10px}.ionbox b{display:block;font-size:19px}.ionbox span{font-size:11px;color:var(--muted)}.legend{display:flex;flex-wrap:wrap;gap:12px}.key{display:flex;align-items:center;gap:7px;font-size:12px;color:#cbd8e9}.dot{width:13px;height:13px;border-radius:50%;box-shadow:0 0 12px #fff3}.checks{display:grid;gap:10px}.check{font-size:12px;color:#cbd8e9;display:flex;gap:8px;align-items:center}.check input{accent-color:#6be0ed}.explain{font-size:12px;line-height:1.55;color:#c6d4e6}.steps{display:grid;gap:9px}.step{display:flex;gap:9px;color:#c6d4e6;font-size:12px;line-height:1.45}.num{width:21px;height:21px;flex:none;display:grid;place-items:center;border-radius:7px;background:#234057;color:#8debf3;font-weight:800}.notice{border-left:3px solid var(--gold);padding:8px 10px;background:#2b281f77;border-radius:0 8px 8px 0;color:#f0d9aa;font-size:11px;line-height:1.45;margin-top:10px}.footer{text-align:center;color:#778da8;font-size:11px;margin:17px 0}
+@media(max-width:950px){.layout{grid-template-columns:1fr}.viewer{height:58vh;min-height:430px}.side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.side .card:first-child,.side .card:last-child{grid-column:1/-1}}
+@media(max-width:560px){header{padding-top:15px}.viewer{height:490px;min-height:430px}.overlay{display:block}.tools{justify-content:flex-start;margin-top:10px}.side{grid-template-columns:1fr}.side .card{grid-column:auto!important}.hint{max-width:82%}}
+</style>
+</head>
+<body>
+<header><div class="brand"><div class="logo">3D</div><div><div class="title">Ionic Compounds Explorer</div><div class="subtitle">An interactive 3D chemistry lab</div></div></div><div class="tag">15 COMPOUNDS • ROTATABLE 3D MODELS</div></header>
+<main><div class="layout">
+<section class="viewer"><div id="stage"></div><div class="overlay"><div><div class="ov-title" id="modelTitle">Sodium chloride crystal</div><div class="ov-sub">Drag to rotate • Scroll or pinch to zoom</div></div><div class="tools"><button id="reset">Reset view</button><button id="spin" class="active">Auto rotate: on</button></div></div><div class="hint">Ions are shown as coloured spheres. Links indicate nearby opposite-charge neighbours.</div></section>
+<aside class="side">
+<section class="card"><label class="label" for="compound">SELECT A COMPOUND</label><select id="compound"></select><div class="formula" id="formula">NaCl</div><div class="name" id="compoundName">Sodium chloride</div><div class="ions"><div class="ionbox"><b id="positive">Na⁺</b><span>positive ion</span></div><div class="ionbox"><b id="negative">Cl⁻</b><span>negative ion</span></div></div></section>
+<section class="card"><h2>ION COLOUR KEY</h2><div class="legend"><div class="key"><i class="dot" id="cationDot" style="background:#6be0ed"></i><span id="cationKey">Na⁺</span></div><div class="key"><i class="dot" style="background:#ff91a6"></i><span id="anionKey">Cl⁻</span></div></div></section>
+<section class="card"><h2>DISPLAY SETTINGS</h2><div class="checks"><label class="check"><input type="checkbox" id="bonds" checked> Show attraction links</label><label class="check"><input type="checkbox" id="labels" checked> Show ion labels</label><label class="check"><input type="checkbox" id="wire"> Show model boundary</label></div></section>
+<section class="card"><h2>UNDERSTAND THE FORMULA</h2><div class="steps" id="steps"></div><div class="notice" id="notice" hidden></div></section>
+</aside></div><div class="footer">Educational visualisation. Crystal arrangements are simplified and are not to scale; some compounds have more complex structures than this model.</div></main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const compounds=[
+{f:'NaCl',n:'Sodium chloride',cat:'Na⁺',an:'Cl⁻',c:'na',a:'cl',nc:1,na:1,desc:'Sodium transfers one electron to chlorine. The +1 and −1 charges balance in a 1:1 ratio.'},
+{f:'MgCl₂',n:'Magnesium chloride',cat:'Mg²⁺',an:'Cl⁻',c:'mg',a:'cl',nc:1,na:2,desc:'Magnesium forms Mg²⁺. Two chloride ions, each −1, balance its +2 charge.'},
+{f:'CaCl₂',n:'Calcium chloride',cat:'Ca²⁺',an:'Cl⁻',c:'ca',a:'cl',nc:1,na:2,desc:'One Ca²⁺ ion is balanced by two Cl⁻ ions.'},
+{f:'KCl',n:'Potassium chloride',cat:'K⁺',an:'Cl⁻',c:'k',a:'cl',nc:1,na:1,desc:'K⁺ and Cl⁻ combine in a 1:1 ratio to give a neutral compound.'},
+{f:'LiF',n:'Lithium fluoride',cat:'Li⁺',an:'F⁻',c:'li',a:'f',nc:1,na:1,desc:'Li⁺ and F⁻ have equal and opposite charges, so the ratio is 1:1.'},
+{f:'NaF',n:'Sodium fluoride',cat:'Na⁺',an:'F⁻',c:'na',a:'f',nc:1,na:1,desc:'One Na⁺ balances one F⁻.'},
+{f:'MgO',n:'Magnesium oxide',cat:'Mg²⁺',an:'O²⁻',c:'mg',a:'o',nc:1,na:1,desc:'Mg²⁺ and O²⁻ balance in a 1:1 ratio because their charge magnitudes are both 2.'},
+{f:'CaO',n:'Calcium oxide',cat:'Ca²⁺',an:'O²⁻',c:'ca',a:'o',nc:1,na:1,desc:'One Ca²⁺ balances one O²⁻, giving a neutral formula unit.'},
+{f:'Al₂O₃',n:'Aluminium oxide',cat:'Al³⁺',an:'O²⁻',c:'al',a:'o',nc:2,na:3,desc:'Two Al³⁺ ions give +6; three O²⁻ ions give −6. The smallest whole-number ratio is 2:3.'},
+{f:'Na₂O',n:'Sodium oxide',cat:'Na⁺',an:'O²⁻',c:'na',a:'o',nc:2,na:1,desc:'Two Na⁺ ions provide +2, balancing one O²⁻ ion.'},
+{f:'KBr',n:'Potassium bromide',cat:'K⁺',an:'Br⁻',c:'k',a:'br',nc:1,na:1,desc:'K⁺ and Br⁻ combine in a 1:1 ratio.'},
+{f:'KI',n:'Potassium iodide',cat:'K⁺',an:'I⁻',c:'k',a:'i',nc:1,na:1,desc:'K⁺ and I⁻ have equal and opposite charges, giving a 1:1 ratio.'},
+{f:'CaF₂',n:'Calcium fluoride',cat:'Ca²⁺',an:'F⁻',c:'ca',a:'f',nc:1,na:2,desc:'One Ca²⁺ is balanced by two F⁻ ions.'},
+{f:'BaCl₂',n:'Barium chloride',cat:'Ba²⁺',an:'Cl⁻',c:'ba',a:'cl',nc:1,na:2,desc:'One Ba²⁺ balances two Cl⁻ ions.'},
+{f:'ZnS',n:'Zinc sulfide',cat:'Zn²⁺',an:'S²⁻',c:'zn',a:'s',nc:1,na:1,desc:'Zn²⁺ and S²⁻ balance in a 1:1 ratio.'}
+];
+const colors={na:'#63d7e8',mg:'#ffc66d',ca:'#9d9cff',k:'#82d6a5',li:'#f3a7e8',al:'#b6c8ff',ba:'#e6bd80',zn:'#b7d7df',cl:'#ff91a6',f:'#b5e5ff',o:'#ffb36d',br:'#d69bff',i:'#c2a0ff',s:'#f4d66c'};
+const stage=document.querySelector('#stage'),scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(42,1,.1,100);
+camera.position.set(7,6,9);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;stage.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.autoRotate=true;controls.autoRotateSpeed=.9;controls.minDistance=4;controls.maxDistance=22;
+scene.add(new THREE.AmbientLight(0xffffff,1.2));const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(5,8,7);scene.add(light);const fill=new THREE.PointLight(0x69dce9,1.4,30);fill.position.set(-5,1,-4);scene.add(fill);
+const group=new THREE.Group();scene.add(group);const sphere=new THREE.SphereGeometry(1,28,22);
+const materialCache={};function material(k){return materialCache[k]||(materialCache[k]=new THREE.MeshStandardMaterial({color:colors[k],metalness:.08,roughness:.28}));}
+const bondMat=new THREE.MeshStandardMaterial({color:'#9ab0ca',transparent:true,opacity:.34});
+const edgeMat=new THREE.LineBasicMaterial({color:'#7adce8',transparent:true,opacity:.42});
+let ions=[],bonds=[],labels=[],edges=[];
+function labelSprite(txt,color){const c=document.createElement('canvas');c.width=256;c.height=96;const x=c.getContext('2d');x.font='bold 52px Arial';x.textAlign='center';x.textBaseline='middle';x.fillStyle=color;x.shadowColor='#07111f';x.shadowBlur=8;x.fillText(txt,128,48);const tex=new THREE.CanvasTexture(c);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false}));s.scale.set(.82,.31,1);return s;}
+function addIon(p,k,txt){const m=new THREE.Mesh(sphere,material(k));m.position.set(...p);const radius=['o','s','cl','br','i','f'].includes(k)?.37:.31;m.scale.setScalar(radius);group.add(m);ions.push(m);const l=labelSprite(txt,colors[k]);l.position.set(p[0],p[1]+radius+.2,p[2]);group.add(l);labels.push(l);}
+function addBond(a,b){const va=new THREE.Vector3(...a),vb=new THREE.Vector3(...b),d=new THREE.Vector3().subVectors(vb,va);const m=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,d.length(),7),bondMat);m.position.copy(va).add(vb).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());group.add(m);bonds.push(m);}
+function clear(){while(group.children.length){const o=group.children.pop();if(o.geometry&&o.geometry!==sphere)o.geometry.dispose();if(o.material&&!Array.isArray(o.material)&&o.material!==bondMat&&o.material!==edgeMat)o.material.dispose?.();}ions=[];bonds=[];labels=[];edges=[];}
+function addBoundary(size){let h=size/2,p=[[-h,-h,-h],[h,-h,-h],[h,h,-h],[-h,h,-h],[-h,-h,h],[h,-h,h],[h,h,h],[-h,h,h]],e=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];for(const [a,b] of e){const g=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...p[a]),new THREE.Vector3(...p[b])]);const l=new THREE.Line(g,edgeMat);group.add(l);edges.push(l);}}
+function build(d){
+ clear();
+ // A repeated neutral formula-unit cluster: accurate ion counts and charge balance, with a deliberately simplified arrangement.
+ const count=Math.max(d.nc,d.na),positions=[];
+ const radius=1.12;
+ for(let u=0;u<2;u++){
+  const n=u===0?d.nc:d.na,kind=u===0?d.c:d.a,txt=u===0?d.cat:d.an;
+  for(let j=0;j<n;j++){
+   const angle=(j/Math.max(n,1))*Math.PI*2+(u===0?0:Math.PI/Math.max(n,1));
+   const p=n===1?(u===0?[-.36,0,0]:[.36,0,0]):[Math.cos(angle)*radius,(u===0?-.22:.22),Math.sin(angle)*radius];
+   positions.push({p,kind,u});addIon(p,kind,txt);
+  }
+ }
+ // Duplicate neutral units into a small 3D array so the model reads as a solid ionic material.
+ const base=positions.map(v=>({...v}));
+ for(const shift of [[-2.5,0,-2.5],[2.5,0,-2.5],[-2.5,0,2.5],[2.5,0,2.5],[0,2.5,0],[0,-2.5,0]]){
+  for(const v of base){const p=[v.p[0]+shift[0],v.p[1]+shift[1],v.p[2]+shift[2]];addIon(p,v.kind,v.u===0?d.cat:d.an);}
+ }
+ // Attraction links within each neutral formula unit only, avoiding misleading bonds between distant units.
+ const all=group.children.filter(o=>o.isMesh&&o.geometry===sphere);
+ for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++){const a=all[i],b=all[j];if(a.material===material(d.c)&&b.material===material(d.a)||a.material===material(d.a)&&b.material===material(d.c)){if(a.position.distanceTo(b.position)<2.1)addBond(a.position.toArray(),b.position.toArray());}}
+ addBoundary(7.1);
+}
+function refresh(){const d=compounds[+document.querySelector('#compound').value];build(d);document.querySelector('#formula').textContent=d.f;document.querySelector('#compoundName').textContent=d.n;document.querySelector('#modelTitle').textContent=d.n+' • 3D ion model';document.querySelector('#positive').textContent=d.cat+' × '+d.nc;document.querySelector('#negative').textContent=d.an+' × '+d.na;document.querySelector('#cationKey').textContent=d.cat;document.querySelector('#anionKey').textContent=d.an;document.querySelector('#cationDot').style.background=colors[d.c];document.querySelector('#steps').innerHTML=`<div class="step"><span class="num">1</span><span>Positive ion: ${d.cat} (there are ${d.nc} in the simplest formula unit).</span></div><div class="step"><span class="num">2</span><span>Negative ion: ${d.an} (there are ${d.na} in the simplest formula unit).</span></div><div class="step"><span class="num">3</span><span>${d.desc}</span></div>`;camera.position.set(7,6,9);controls.target.set(0,0,0);controls.update();sync();}
+function sync(){const b=document.querySelector('#bonds').checked,l=document.querySelector('#labels').checked,w=document.querySelector('#wire').checked;bonds.forEach(x=>x.visible=b);labels.forEach(x=>x.visible=l);edges.forEach(x=>x.visible=w);}
+compounds.forEach((d,i)=>{const o=document.createElement('option');o.value=i;o.textContent=d.f+' — '+d.n;document.querySelector('#compound').append(o);});
+document.querySelector('#compound').addEventListener('change',refresh);['bonds','labels','wire'].forEach(id=>document.querySelector('#'+id).addEventListener('change',sync));
+document.querySelector('#reset').onclick=()=>{camera.position.set(7,6,9);controls.target.set(0,0,0);controls.update();};
+document.querySelector('#spin').onclick=e=>{controls.autoRotate=!controls.autoRotate;e.currentTarget.classList.toggle('active',controls.autoRotate);e.currentTarget.textContent='Auto rotate: '+(controls.autoRotate?'on':'off');};
+new ResizeObserver(()=>{const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}).observe(stage);
+refresh();function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();
+</script></body></html>
